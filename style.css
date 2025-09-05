@@ -29,6 +29,10 @@ body {
     margin: 5px;
 }
 
+.teamName {
+    cursor:grab;
+}
+
 #tablesDiv {
     border: 1px solid purple;
     display: flex;

@@ -9,12 +9,19 @@ fetch('teams.json')
 
 const newTableButton = document.getElementById("newTableButton");
 
+document.addEventListener('click', (e) => {
+    if (e.target.matches('.removeTableButton')) {
+        e.preventDefault();
+        poistaTaulukko(e.target)
+    }
+})
+
 newTableButton.addEventListener("click", function(ev) {
     ev.preventDefault();
     let tablesDiv = document.getElementById("tablesDiv");
 
     let tableDiv = document.createElement("div")
-    tableDiv.setAttribute("id", "tableDiv");
+    tableDiv.setAttribute("class", "tableDiv");
 
     let uxDiv = document.createElement("div");
     uxDiv.setAttribute("class", "uxDiv");
@@ -58,6 +65,7 @@ newTableButton.addEventListener("click", function(ev) {
 
         let teamNameCol = document.createElement("td");
         teamNameCol.textContent = team
+        teamNameCol.setAttribute("class", "teamName");
         teamNameCol.setAttribute("draggable", "true");
         row.appendChild(teamNameCol);
         leagueTable.appendChild(row);
@@ -67,3 +75,8 @@ newTableButton.addEventListener("click", function(ev) {
     tableDiv.appendChild(leagueTable);
     tablesDiv.appendChild(tableDiv)
 });
+
+function poistaTaulukko(target) {
+    let closest = target.closest(".tableDiv");
+    closest.remove();
+}
