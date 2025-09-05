@@ -16,6 +16,41 @@ document.addEventListener('click', (e) => {
     }
 })
 
+document.addEventListener('dragstart', (e) => {
+    console.log(`aloitettiin raahaus kohteelle ${e.target.textContent}`)
+    e.target.classList.add('dragging');
+    e.dataTransfer.setData('text', e.target.textContent);
+    e.dataTransfer.dropEffect = 'move';
+})
+
+document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    if (e.target.matches('.teamName')) {
+        console.log(`raahataan yli kohteen ${e.target.textContent}`)
+        e.target.classList.add('droppable');
+    }
+})
+
+document.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    e.target.classList.remove('droppable');
+})
+
+
+document.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if (e.target.matches('.teamName')) {
+        e.target.classList.remove('droppable');
+        e.target.textContent = e.dataTransfer.getData('text');
+    }
+})
+
+document.addEventListener('dragend', (e) => {
+    e.preventDefault();
+    e.target.classList.remove('dragging');
+})
+
+
 newTableButton.addEventListener("click", function(ev) {
     ev.preventDefault();
     let tablesDiv = document.getElementById("tablesDiv");

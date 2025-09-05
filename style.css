@@ -33,6 +33,14 @@ body {
     cursor:grab;
 }
 
+.dragging {
+    opacity: 0.7;
+}
+
+.droppable {
+    background-color: purple;
+}
+
 #tablesDiv {
     border: 1px solid purple;
     display: flex;
