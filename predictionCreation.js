@@ -72,6 +72,7 @@ newTableButton.addEventListener("click", function(ev) {
 
         position++;
     }
+    maalaaTaulukko(leagueTable);
     tableDiv.appendChild(leagueTable);
     tablesDiv.appendChild(tableDiv)
 });
@@ -79,4 +80,21 @@ newTableButton.addEventListener("click", function(ev) {
 function poistaTaulukko(target) {
     let closest = target.closest(".tableDiv");
     closest.remove();
+}
+
+
+function maalaaTaulukko(taulukko) {
+    let rivit = taulukko.getElementsByTagName("tr")
+
+    let red = 0;
+    let green = 255;
+    let blue = 0;
+
+    let step = 255 / teams.length;
+
+    for (let rivi of rivit) {
+        rivi.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
+        green = green - step;
+        red = red + step;
+    }
 }
