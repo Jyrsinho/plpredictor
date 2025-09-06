@@ -38,11 +38,10 @@ body {
 }
 
 .droppable {
-    background-color: purple;
+    outline: 5px solid purple;
 }
 
 #tablesDiv {
-    border: 1px solid purple;
     display: flex;
 }
 

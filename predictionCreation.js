@@ -1,58 +1,119 @@
-let teams = null;
 
 fetch('teams.json')
 .then(response => response.json())
 .then(data => {
-    teams = data.teams;
+    const teams = data.teams;
+    let predictions = [];
+    let backup = [];
     console.log(teams);
+    initializeUI(teams, predictions, backup);
 })
 
-const newTableButton = document.getElementById("newTableButton");
+let lastTargetIndex = null;
 
-document.addEventListener('click', (e) => {
-    if (e.target.matches('.removeTableButton')) {
+function initializeUI(teams, predictions, backup) {
+    const newTableButton = document.getElementById("newTableButton");
+    newTableButton.addEventListener("click", function(ev) {
+        ev.preventDefault();
+        createNewTable(teams, predictions)
+    });
+
+    document.addEventListener('click', (e) => {
+        if (e.target.matches('.removeTableButton')) {
+            e.preventDefault();
+            removeTable(e.target)
+        }
+    })
+
+    initializeDragAndDrop(teams, predictions, backup);
+}
+
+function initializeDragAndDrop(teams, predictions, backup) {
+
+    document.addEventListener('dragstart', (e) => {
+        console.log(`aloitettiin raahaus kohteelle ${e.target.textContent}`)
+        let row = e.target.closest('.teamrow');
+        let rowIndex = row.getAttribute('data-index');
+        e.target.classList.add('dragging');
+        // Set the current position of draggable to dataTransfer object
+        e.dataTransfer.setData('text', rowIndex)
+        console.log(rowIndex)
+        e.dataTransfer.dropEffect = 'move';
+
+        // Saves the original state of prediction in case d&d fails
+        backup = [...predictions[0]]
+    })
+
+    document.addEventListener('dragover', (e) => {
         e.preventDefault();
-        poistaTaulukko(e.target)
-    }
-})
+        let row = e.target.closest('.teamrow');
+        if (row) {
+            row.classList.add('droppable');
+        }
+    });
 
-document.addEventListener('dragstart', (e) => {
-    console.log(`aloitettiin raahaus kohteelle ${e.target.textContent}`)
-    e.target.classList.add('dragging');
-    e.dataTransfer.setData('text', e.target.textContent);
-    e.dataTransfer.dropEffect = 'move';
-})
-
-document.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    if (e.target.matches('.teamName')) {
-        console.log(`raahataan yli kohteen ${e.target.textContent}`)
-        e.target.classList.add('droppable');
-    }
-})
-
-document.addEventListener('dragleave', (e) => {
-    e.preventDefault();
-    e.target.classList.remove('droppable');
-})
+    document.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        let row = e.target.closest('.teamrow');
+        if (row) {
+            row.classList.remove('droppable');
+        }
+    })
 
 
-document.addEventListener('drop', (e) => {
-    e.preventDefault();
-    if (e.target.matches('.teamName')) {
-        e.target.classList.remove('droppable');
-        e.target.textContent = e.dataTransfer.getData('text');
-    }
-})
+    document.addEventListener('drop', (e) => {
+        e.preventDefault();
+        let row = e.target.closest('.teamrow');
+        if (row) {
+            row.classList.remove('droppable');}
+            e.target.classList.remove('droppable');
+            tableIndex = 0;
+            let teamMoving = e.dataTransfer.getData('text');
+            let newPosition = row.getAttribute('data-index');
+            if (lastTargetIndex !== newPosition) {
+                let predictionToUpdate = predictions[tableIndex];
+                let updatedPrediction = updatePrediction(predictionToUpdate, teamMoving, newPosition);
+                let tableToUpdate = document.getElementsByTagName("table")[0];
+                renderTable(updatedPrediction, tableToUpdate)
+        }
+    })
 
-document.addEventListener('dragend', (e) => {
-    e.preventDefault();
-    e.target.classList.remove('dragging');
-})
+    document.addEventListener('dragend', (e) => {
+        e.preventDefault();
+        e.target.classList.remove('dragging');
+    })
+}
+
+/**
+ * Updates the predictions Array
+ *
+ * @param prediction to be updated
+ * @param teamMoving
+ * @param newPosition
+ * @return prediction updated prediction
+ */
+function updatePrediction(prediction, teamMoving, newPosition) {
+    console.log(`Ollaan updatePrediction funktiossa arvoilla ${prediction}  ${teamMoving} ${newPosition} `);
+    prediction = moveElement(prediction, teamMoving, newPosition);
+
+    console.log(`tullaan ulos updatePrediction funktiosta rakenteella ${prediction}`)
+    return prediction;
+}
+
+function moveElement(array, from, to) {
+    let element = array.splice(from, 1)[0];
+    array.splice(to, 0, element);
+    return array;
+}
 
 
-newTableButton.addEventListener("click", function(ev) {
-    ev.preventDefault();
+function removeTable(target) {
+    let closest = target.closest(".tableDiv");
+    closest.remove();
+}
+
+
+function createNewTable(teams, predictions) {
     let tablesDiv = document.getElementById("tablesDiv");
 
     let tableDiv = document.createElement("div")
@@ -83,16 +144,39 @@ newTableButton.addEventListener("click", function(ev) {
 
     // lisätään uxdiv tableDiviin
     tableDiv.appendChild(uxDiv);
-
-
-    // luodaan taulukko, jossa kaikki joukkueet
+    let amountOfExistingTables = document.getElementsByClassName("leaguetable").length
+    let index = amountOfExistingTables;
     let leagueTable = document.createElement("table");
     leagueTable.setAttribute("class", "leaguetable");
+    leagueTable.setAttribute("id", `leagueTable${index}`);
+
+    // populate the array with teams in order
+    renderTable(teams, leagueTable);
+    tableDiv.appendChild(leagueTable);
+    tablesDiv.appendChild(tableDiv)
+
+    // create new prediction to predictions dict
+    predictions.push(teams)
+    console.log(predictions)
+}
+
+/**
+ * Renders the teams in order to a given leaguetable
+ * @param teams array of teams in predicted order
+ * @param leagueTable where teams will be rendered
+ */
+function renderTable(teams, leagueTable) {
+    // clean the old data from leagueTable
+    while (leagueTable.firstChild) {
+        leagueTable.removeChild(leagueTable.firstChild);
+    }
 
     let position = 1;
     for (let team of teams) {
         let row = document.createElement("tr");
-
+        row.setAttribute('class', 'teamrow')
+        row.setAttribute('id', `row${position}`);
+        row.setAttribute('data-index', `${position - 1}`);
 
         let positionColumn = document.createElement("td");
         positionColumn.textContent = position.toString();
@@ -100,32 +184,24 @@ newTableButton.addEventListener("click", function(ev) {
 
         let teamNameCol = document.createElement("td");
         teamNameCol.textContent = team
+        teamNameCol.setAttribute("id", team);
         teamNameCol.setAttribute("class", "teamName");
         teamNameCol.setAttribute("draggable", "true");
         row.appendChild(teamNameCol);
         leagueTable.appendChild(row);
 
         position++;
+        paintTheTable(leagueTable, teams.length);
     }
-    maalaaTaulukko(leagueTable);
-    tableDiv.appendChild(leagueTable);
-    tablesDiv.appendChild(tableDiv)
-});
-
-function poistaTaulukko(target) {
-    let closest = target.closest(".tableDiv");
-    closest.remove();
 }
 
 
-function maalaaTaulukko(taulukko) {
+function paintTheTable(taulukko, amountOfTeams) {
     let rivit = taulukko.getElementsByTagName("tr")
-
     let red = 0;
     let green = 255;
     let blue = 0;
-
-    let step = 255 / teams.length;
+    let step = 255 / amountOfTeams;
 
     for (let rivi of rivit) {
         rivi.style.backgroundColor = `rgb(${red}, ${green}, ${blue})`;
