@@ -10,6 +10,7 @@ fetch('teams.json')
 })
 
 let lastTargetIndex = null;
+let tablesDiv = document.getElementById('tablesDiv');
 
 function initializeUI(teams, predictions, backup) {
     const newTableButton = document.getElementById("newTableButton");
@@ -30,21 +31,28 @@ function initializeUI(teams, predictions, backup) {
 
 function initializeDragAndDrop(teams, predictions, backup) {
 
-    document.addEventListener('dragstart', (e) => {
+    tablesDiv.addEventListener('dragstart', (e) => {
         console.log(`aloitettiin raahaus kohteelle ${e.target.textContent}`)
         let row = e.target.closest('.teamrow');
         let rowIndex = row.getAttribute('data-index');
+        let originTable = row.closest('.leaguetable');
+        let originTableIndex = originTable.getAttribute('data-index');
         e.target.classList.add('dragging');
-        // Set the current position of draggable to dataTransfer object
-        e.dataTransfer.setData('text', rowIndex)
-        console.log(rowIndex)
+
+        const payload = {
+            name: e.target.textContent,
+            originalPosition: rowIndex,
+            table: originTable.getAttribute('data-index')
+        };
+        e.dataTransfer.setData('application/json', JSON.stringify(payload));
         e.dataTransfer.dropEffect = 'move';
 
+        console.log(`dragin payload on ${e.dataTransfer.getData('application/json')}`);
         // Saves the original state of prediction in case d&d fails
-        backup = [...predictions[0]]
+        backup = [...predictions[originTableIndex]]
     })
 
-    document.addEventListener('dragover', (e) => {
+    tablesDiv.addEventListener('dragover', (e) => {
         e.preventDefault();
         let row = e.target.closest('.teamrow');
         if (row) {
@@ -52,7 +60,7 @@ function initializeDragAndDrop(teams, predictions, backup) {
         }
     });
 
-    document.addEventListener('dragleave', (e) => {
+    tablesDiv.addEventListener('dragleave', (e) => {
         e.preventDefault();
         let row = e.target.closest('.teamrow');
         if (row) {
@@ -61,25 +69,36 @@ function initializeDragAndDrop(teams, predictions, backup) {
     })
 
 
-    document.addEventListener('drop', (e) => {
+    tablesDiv.addEventListener('drop', (e) => {
         e.preventDefault();
+        let payload = JSON.parse(e.dataTransfer.getData('application/json'));
+
+        console.log(`Ollaan dropissa payload: ${payload['name']} ${payload['originalPosition']} ${payload['table']}`);
         let row = e.target.closest('.teamrow');
         if (row) {
             row.classList.remove('droppable');}
-            e.target.classList.remove('droppable');
-            let table = e.target.closest('.leaguetable');
-            tableIndex = table.getAttribute('data-index');
-            let teamMoving = e.dataTransfer.getData('text');
-            let newPosition = row.getAttribute('data-index');
-            if (lastTargetIndex !== newPosition) {
-                let predictionToUpdate = predictions[tableIndex];
-                let updatedPrediction = updatePrediction(predictionToUpdate, teamMoving, newPosition);
-                let tableToUpdate = document.getElementsByTagName("table")[tableIndex];
-                renderTable(updatedPrediction, tableToUpdate)
-        }
+
+            let dropTable = e.target.closest('.leaguetable');
+            let teamOriginalPosition = payload['originalPosition'];
+            let dropTableIndex = dropTable.getAttribute('data-index');
+            let originTableIndex = payload['table'];
+
+            console.log(`dropTableIndex ${dropTableIndex} originTableIndex ${originTableIndex}`);
+            if (dropTableIndex === originTableIndex) {
+                let newPosition = row.getAttribute('data-index');
+                if (lastTargetIndex !== newPosition) {
+                    let predictionToUpdate = predictions[dropTableIndex];
+                    let updatedPrediction = updatePrediction(predictionToUpdate, teamOriginalPosition, newPosition);
+                    let tableToUpdate = document.getElementsByTagName("table")[dropTableIndex];
+                    renderTable(updatedPrediction, tableToUpdate)
+                }
+            }
+            else {
+                console.log(`You dropped to a wrong table`);
+            }
     })
 
-    document.addEventListener('dragend', (e) => {
+    tablesDiv.addEventListener('dragend', (e) => {
         e.preventDefault();
         e.target.classList.remove('dragging');
     })
