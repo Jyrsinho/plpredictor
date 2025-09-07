@@ -67,13 +67,14 @@ function initializeDragAndDrop(teams, predictions, backup) {
         if (row) {
             row.classList.remove('droppable');}
             e.target.classList.remove('droppable');
-            tableIndex = 0;
+            let table = e.target.closest('.leaguetable');
+            tableIndex = table.getAttribute('data-index');
             let teamMoving = e.dataTransfer.getData('text');
             let newPosition = row.getAttribute('data-index');
             if (lastTargetIndex !== newPosition) {
                 let predictionToUpdate = predictions[tableIndex];
                 let updatedPrediction = updatePrediction(predictionToUpdate, teamMoving, newPosition);
-                let tableToUpdate = document.getElementsByTagName("table")[0];
+                let tableToUpdate = document.getElementsByTagName("table")[tableIndex];
                 renderTable(updatedPrediction, tableToUpdate)
         }
     })
@@ -149,6 +150,7 @@ function createNewTable(teams, predictions) {
     let leagueTable = document.createElement("table");
     leagueTable.setAttribute("class", "leaguetable");
     leagueTable.setAttribute("id", `leagueTable${index}`);
+    leagueTable.setAttribute("data-index", `${index}`);
 
     // populate the array with teams in order
     renderTable(teams, leagueTable);
