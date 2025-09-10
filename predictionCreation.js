@@ -12,8 +12,18 @@ fetch('teams.json')
 let lastTargetIndex = null;
 let tablesDiv = document.getElementById('tablesDiv');
 
+
 function initializeUI(teams, predictions, backup) {
     const newTableButton = document.getElementById("newTableButton");
+    const predictionForm = document.getElementById("predictionForm");
+
+    predictionForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        validateForm(predictionForm);
+        const formData = new FormData(e.target);
+        console.log(formData);
+    })
+
     newTableButton.addEventListener("click", function(ev) {
         ev.preventDefault();
         createNewTable(teams, predictions)
@@ -24,7 +34,9 @@ function initializeUI(teams, predictions, backup) {
             e.preventDefault();
             removeTable(e.target)
         }
-    })
+    });
+
+
 
     initializeDragAndDrop(teams, predictions, backup);
 }
@@ -48,6 +60,8 @@ function initializeDragAndDrop(teams, predictions, backup) {
         e.dataTransfer.dropEffect = 'move';
 
         console.log(`dragin payload on ${e.dataTransfer.getData('application/json')}`);
+        console.log(`teams: ${teams}`);
+        console.log(`predictions: ${JSON.stringify(predictions)}`);
         // Saves the original state of prediction in case d&d fails
         backup = [...predictions[originTableIndex]]
     })
@@ -153,6 +167,7 @@ function createNewTable(teams, predictions) {
     let inputField = document.createElement("input");
     inputField.setAttribute("id", "userName");
     inputField.setAttribute("type", "text");
+    inputField.required = true;
     newUserDiv.appendChild(inputField);
     uxDiv.appendChild(newUserDiv);
 
@@ -177,7 +192,7 @@ function createNewTable(teams, predictions) {
     tablesDiv.appendChild(tableDiv)
 
     // create new prediction to predictions dict
-    predictions.push(teams)
+    predictions.push([...teams])
     console.log(predictions)
 }
 
@@ -229,4 +244,9 @@ function paintTheTable(taulukko, amountOfTeams) {
         green = green - step;
         red = red + step;
     }
+}
+
+function validateForm(form) {
+    // This is where we validate the form
+    console.log("WE NEED TO DO VALIDATION FOR THIS FORM");
 }
